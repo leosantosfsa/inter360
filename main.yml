@@ -1,0 +1,88 @@
+name: CI/CD com Docker para Frontend e Backend
+
+on:
+  push:
+    branches:
+      - main # O workflow será acionado em pushes para a branch 'main'
+  workflow_dispatch: # Permite acionar o workflow manualmente
+
+jobs:
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }} # Seu usuário do Docker Hub
+          password: ${{ secrets.DOCKER_PASSWORD }} # Seu token de acesso pessoal do Docker Hub
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir e Enviar Imagem Docker do Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend # Caminho para o diretório do frontend
+          file: ./frontend/Dockerfile # Caminho para o Dockerfile do frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/whaticket-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/whaticket-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir e Enviar Imagem Docker do Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend # Caminho para o diretório do backend
+          file: ./backend/Dockerfile # Caminho para o Dockerfile do backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/whaticket-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/whaticket-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-push-frontend, build-and-push-backend] # Garante que as imagens foram construídas e enviadas
+    environment: production # Opcional: define um ambiente de deployment
+    steps:
+      - name: Exemplo de Passo de Deployment
+        run: |
+          echo "Iniciando deployment..."
+          # Aqui você adicionaria os comandos para implantar suas aplicações.
+          # Isso pode incluir:
+          # - SSH para um servidor remoto e execução de comandos Docker Compose.
+          # - Uso de ferramentas de orquestração como Kubernetes (kubectl).
+          # - Atualização de serviços em provedores de nuvem (AWS ECS, Google Cloud Run, Azure Container Apps).
+          # - Uso de ferramentas de deployment como Ansible, Terraform, etc.
+          echo "Imagens construídas e prontas para instalação/deployment:"
+          echo "Frontend: ${{ secrets.DOCKER_USERNAME }}/whaticket-frontend:${{ github.sha }}"
+          echo "Backend: ${{ secrets.DOCKER_USERNAME }}/whaticket-backend:${{ github.sha }}"
+          echo "Deployment concluído (este é um placeholder, personalize-o!)"
+
+          # Exemplo de como você poderia puxar e rodar com Docker Compose em um servidor remoto:
+          # ssh user@your-server-ip "
+          #   cd /path/to/whaticket/project &&
+          #   docker-compose pull frontend backend &&
+          #   docker-compose up -d --remove-orphans
+          # "

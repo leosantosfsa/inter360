@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend # Caminho para o Dockerfile do frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80" # Mapeia a porta 80 do host para a porta 80 do container
+    depends_on:
+      - backend # Garante que o backend inicie antes do frontend (opcional, dependendo da necessidade)
+    restart: always # Reinicia o container automaticamente se ele falhar
+
+  backend:
+    build:
+      context: ./backend # Caminho para o Dockerfile do backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Mapeia a porta 8080 do host para a porta 8080 do container
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://user:password@db:5432/mydatabase # Exemplo de variável de ambiente
+      # Adicione outras variáveis de ambiente necessárias para o backend
+    depends_on:
+      - db # Garante que o banco de dados inicie antes do backend
+    restart: always
+
+  db:
+    image: postgres:13-alpine # Exemplo de serviço de banco de dados
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/postgresql/data # Persiste os dados do banco de dados
+    restart: always
+
+volumes:
+  db-data: # Define o volume para persistência de dados
