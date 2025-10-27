@@ -32,6 +32,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache
+        uses: actions/cache@v4.3.0
+        
+
       # 2. Faz o login no GitHub Container Registry (ghcr.io)
       # Usa o GITHUB_TOKEN para autenticação segura e automática
       - name: Log in to the Container registry
