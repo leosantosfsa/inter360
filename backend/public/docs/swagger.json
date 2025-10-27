@@ -1,0 +1,1431 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Kmenu",
+    "description": "Documentação da API para integração com o sistema Kmenu",
+    "version": "1.0.0",
+    "contact": {
+      "email": "suporte@kmenu.com.br"
+    }
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "description": "URL da API Kmenu",
+      "variables": {
+        "baseUrl": {
+          "default": "https://api.kmenu.com.br",
+          "description": "URL base da API"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Operações de autenticação e gestão de sessões"
+    },
+    {
+      "name": "Tickets",
+      "description": "Operações relacionadas aos tickets de atendimento"
+    },
+    {
+      "name": "Mensagens",
+      "description": "Operações relacionadas às mensagens de tickets"
+    },
+    {
+      "name": "Contatos",
+      "description": "Operações relacionadas aos contatos"
+    },
+    {
+      "name": "WhatsApp",
+      "description": "Operações relacionadas às sessões do WhatsApp"
+    },
+    {
+      "name": "Agendamentos",
+      "description": "Operações relacionadas a agendamentos"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Login na plataforma",
+        "description": "Realiza autenticação e retorna token de acesso",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "usuario@exemplo.com",
+                "password": "senha"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Cadastro de novo usuário",
+        "description": "Cria um novo usuário no sistema",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              },
+              "example": {
+                "name": "Usuário Teste",
+                "email": "usuario@exemplo.com",
+                "password": "senha",
+                "profile": "admin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos ou e-mail já cadastrado"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Informações do usuário logado",
+        "description": "Retorna dados do usuário autenticado",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informações do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "delete": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Logout do sistema",
+        "description": "Encerra a sessão do usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Listar tickets",
+        "description": "Retorna lista de tickets",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "pending",
+                "closed"
+              ]
+            },
+            "description": "Filtrar por status"
+          },
+          {
+            "in": "query",
+            "name": "searchParam",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Termo para busca"
+          },
+          {
+            "in": "query",
+            "name": "pageNumber",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Número da página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de tickets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tickets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Ticket"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Criar ticket",
+        "description": "Cria um novo ticket de atendimento",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketCreate"
+              },
+              "example": {
+                "contactId": 1,
+                "status": "open",
+                "userId": 1,
+                "queueId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ticket criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/tickets/{ticketId}": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Obter ticket por ID",
+        "description": "Retorna os dados de um ticket específico",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do ticket"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do ticket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Atualizar ticket",
+        "description": "Atualiza os dados de um ticket",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do ticket"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketUpdate"
+              },
+              "example": {
+                "status": "closed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Excluir ticket",
+        "description": "Remove um ticket do sistema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do ticket"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket excluído com sucesso"
+          },
+          "404": {
+            "description": "Ticket não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/messages/{ticketId}": {
+      "get": {
+        "tags": [
+          "Mensagens"
+        ],
+        "summary": "Listar mensagens do ticket",
+        "description": "Retorna as mensagens de um ticket específico",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do ticket"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de mensagens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Message"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mensagens"
+        ],
+        "summary": "Enviar mensagem",
+        "description": "Envia uma nova mensagem para um ticket",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do ticket"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageCreate"
+              },
+              "example": {
+                "body": "Olá, como posso ajudar?",
+                "fromMe": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mensagem enviada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "tags": [
+          "Contatos"
+        ],
+        "summary": "Listar contatos",
+        "description": "Retorna lista de contatos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "searchParam",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Termo para busca"
+          },
+          {
+            "in": "query",
+            "name": "pageNumber",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Número da página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contatos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Contact"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contatos"
+        ],
+        "summary": "Criar contato",
+        "description": "Cria um novo contato no sistema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCreate"
+              },
+              "example": {
+                "name": "Nome do Contato",
+                "number": "5519971395449"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contato criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/contacts/{contactId}": {
+      "get": {
+        "tags": [
+          "Contatos"
+        ],
+        "summary": "Obter contato por ID",
+        "description": "Retorna os dados de um contato específico",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contactId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do contato"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do contato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contato não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Contatos"
+        ],
+        "summary": "Atualizar contato",
+        "description": "Atualiza os dados de um contato",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contactId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do contato"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUpdate"
+              },
+              "example": {
+                "name": "Nome Atualizado",
+                "number": "5519971395449"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contato atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contato não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/whatsapp": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Listar conexões WhatsApp",
+        "description": "Retorna lista das conexões do WhatsApp",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de conexões",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WhatsApp"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/whatsappsession/{whatsappId}": {
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Criar sessão WhatsApp",
+        "description": "Inicia uma sessão do WhatsApp",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "whatsappId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID da conexão WhatsApp"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatsAppSessionCreate"
+              },
+              "example": {
+                "session": "Sessão WhatsApp 1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sessão criada com sucesso"
+          },
+          "404": {
+            "description": "Conexão não encontrada"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/schedules": {
+      "get": {
+        "tags": [
+          "Agendamentos"
+        ],
+        "summary": "Listar agendamentos",
+        "description": "Retorna lista de agendamentos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Schedule"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agendamentos"
+        ],
+        "summary": "Criar agendamento",
+        "description": "Cria um novo agendamento",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleCreate"
+              },
+              "example": {
+                "title": "Reunião de Equipe",
+                "description": "Reunião para discussão de metas",
+                "date": "2025-02-28T14:00:00",
+                "contactId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/schedules/{scheduleId}": {
+      "get": {
+        "tags": [
+          "Agendamentos"
+        ],
+        "summary": "Obter agendamento por ID",
+        "description": "Retorna os dados de um agendamento específico",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do agendamento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do agendamento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agendamentos"
+        ],
+        "summary": "Atualizar agendamento",
+        "description": "Atualiza os dados de um agendamento",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do agendamento"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleUpdate"
+              },
+              "example": {
+                "title": "Reunião de Equipe Atualizada",
+                "description": "Reunião para revisão de progresso",
+                "date": "2025-02-28T16:00:00",
+                "contactId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agendamento atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Agendamentos"
+        ],
+        "summary": "Excluir agendamento",
+        "description": "Remove um agendamento do sistema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID do agendamento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento excluído com sucesso"
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "SignupRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "profile"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "user"
+            ]
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "super": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ]
+          },
+          "unreadMessages": {
+            "type": "integer"
+          },
+          "lastMessage": {
+            "type": "string"
+          },
+          "contactId": {
+            "type": "integer"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "queueId": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TicketCreate": {
+        "type": "object",
+        "required": [
+          "contactId"
+        ],
+        "properties": {
+          "contactId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ]
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "queueId": {
+            "type": "integer"
+          }
+        }
+      },
+      "TicketUpdate": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ]
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "queueId": {
+            "type": "integer"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "body": {
+            "type": "string"
+          },
+          "fromMe": {
+            "type": "boolean"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "mediaUrl": {
+            "type": "string"
+          },
+          "ticketId": {
+            "type": "integer"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MessageCreate": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "fromMe": {
+            "type": "boolean"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "mediaUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "profilePicUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ContactCreate": {
+        "type": "object",
+        "required": [
+          "name",
+          "number"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "ContactUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "WhatsApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "qrcode": {
+            "type": "string"
+          },
+          "battery": {
+            "type": "string"
+          },
+          "plugged": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WhatsAppSessionCreate": {
+        "type": "object",
+        "required": [
+          "session"
+        ],
+        "properties": {
+          "session": {
+            "type": "string"
+          }
+        }
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contactId": {
+            "type": "integer"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ScheduleCreate": {
+        "type": "object",
+        "required": [
+          "title",
+          "date",
+          "contactId"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contactId": {
+            "type": "integer"
+          }
+        }
+      },
+      "ScheduleUpdate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contactId": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}
